@@ -15,15 +15,14 @@ include(${VTK_USE_FILE})
 # gmsh укажем явно по кусочкам (потому что он был просто распакован руками)
 add_library(gmsh SHARED IMPORTED)
 set_target_properties(gmsh PROPERTIES
-    IMPORTED_LOCATION "/home/anganar/gmsh-4.7.1-Linux64-sdk/lib/libgmsh.so"
-    INTERFACE_INCLUDE_DIRECTORIES "/home/anganar/gmsh-4.7.1-Linux64-sdk/include"
+    IMPORTED_LOCATION "/usr/lib64/libgmsh.so"
+    # INTERFACE_INCLUDE_DIRECTORIES ""
 )
 set(GMSH_LIBRARY gmsh)
 
-# если бы gmsh был поставлен прилично, то можно было бы примерно вот так
-#find_package(gmsh REQUIRED)
-#include_directories(${GMSH_INCLUDE_DIR})
-#target_link_libraries(tetr3d ${GMSH_LIBRARY})
+
+include_directories(${GMSH_INCLUDE_DIR})
+target_link_libraries(tetr3d ${GMSH_LIBRARY})
 
 # Укажем библиотеки для линковки
 # ... тут только VTK
