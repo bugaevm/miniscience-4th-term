@@ -6,13 +6,14 @@ project(vtkdemo)
 add_executable(cubic2d cubic2d.cpp)
 add_executable(cubic3d cubic3d.cpp)
 add_executable(tetr3d tetr3d.cpp)
+add_executable(tar3d tar3d.cpp)
 
 # Найдём VTK
 find_package(VTK REQUIRED)
 # ... и подключим её со всеми её компонентами её нативными средствами
 include(${VTK_USE_FILE})
 
-# gmsh укажем явно по кусочкам (потому что он был просто распакован руками)
+# gmsh укажем явно по кусочкам (потому что он был просто распакован руками) (на этой машине -- нет, но по**й)
 add_library(gmsh SHARED IMPORTED)
 set_target_properties(gmsh PROPERTIES
     IMPORTED_LOCATION "/usr/lib64/libgmsh.so"
@@ -23,6 +24,7 @@ set(GMSH_LIBRARY gmsh)
 
 include_directories(${GMSH_INCLUDE_DIR})
 target_link_libraries(tetr3d ${GMSH_LIBRARY})
+target_link_libraries(tar3d ${GMSH_LIBRARY})
 
 # Укажем библиотеки для линковки
 # ... тут только VTK
@@ -32,3 +34,7 @@ target_link_libraries(cubic3d ${VTK_LIBRARIES})
 # ... а тут ещё и gmsh
 target_link_libraries(tetr3d ${VTK_LIBRARIES})
 target_link_libraries(tetr3d ${GMSH_LIBRARY})
+
+target_link_libraries(tar3d ${VTK_LIBRARIES})
+target_link_libraries(tar3d ${GMSH_LIBRARY})
+
