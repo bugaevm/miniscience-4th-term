@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 #include <cmath>
 #include <vector>
 
@@ -50,6 +51,15 @@ public:
         x += vx * tau;
         y += vy * tau;
         z += vz * tau;
+
+        vx = -1. * y * (1. + 0.08 * abs(z));
+        vy = 1. * x * (1. + 0.08 * abs(z));
+        vz -= 60. * z * tau;
+    }
+
+    // Метод отвечает за изменение скалярного поля
+    void heat(double tau) {
+        smth = - z * z + 0.005 * (vx * vx + vy * vy + vz * vz);
     }
 };
 
@@ -84,9 +94,20 @@ public:
             double pointX = nodesCoords[i*3];
             double pointY = nodesCoords[i*3 + 1];
             double pointZ = nodesCoords[i*3 + 2];
+
+            // Скорости
+
+            double r = sqrt(pointX * pointX + pointY * pointY);
+
+            double vx = -pointY * (1. + 0.08 * pointZ);
+            double vy = pointX * (1. + 0.08 * pointZ);
+            double vz = 0.0;
+
             // Модельная скалярная величина распределена как-то вот так
-            double smth = pow(pointX, 2) + pow(pointY, 2) + pow(pointZ, 2);
-            nodes[i] = CalcNode(pointX, pointY, pointZ, smth, 0.0, 0.0, 0.0);
+            double smth = - pointZ * pointZ + 0.005 * (vx * vx + vy * vy + vz * vz);
+
+
+            nodes[i] = CalcNode(pointX, pointY, pointZ, smth, vx, vy, vz);
         }
 
         // Пройдём по элементам в модели gmsh
@@ -101,9 +122,10 @@ public:
 
     // Метод отвечает за выполнение для всей сетки шага по времени величиной tau
     void doTimeStep(double tau) {
-        // По сути метод просто двигает все точки
+        // По сути метод просто двигает все точки (не только)
         for(unsigned int i = 0; i < nodes.size(); i++) {
             nodes[i].move(tau);
+            nodes[i].heat(tau);
         }
     }
 
@@ -226,22 +248,22 @@ int main()
     std::vector<std::vector<std::size_t>> elementTags;
     std::vector<std::vector<std::size_t>> elementNodeTags;
     gmsh::model::mesh::getElements(elementTypes, elementTags, elementNodeTags);
-    
+
     std::cout << "elementTypes.size(): " << elementTypes.size() << std::endl;
-    
+
     for(unsigned int i = 0; i < elementTypes.size(); i++) {
         std::cout << "Working with tetras " << i << "...";
-        
+
         if(elementTypes[i] != GMSH_TETR_CODE) {
                 std::cout << " Skipped" << std::endl;
                 continue;
         }
-        
+
         tetrsNodesTags = &elementNodeTags[i];
-        
-        std::cout << std::endl; 
-        
-        
+
+        std::cout << std::endl;
+
+
     }
 
     if(tetrsNodesTags == nullptr) {
@@ -266,9 +288,25 @@ int main()
 
     gmsh::finalize();
 
+    printf("\nGenerating steps...");
+
+    // Пишем её начальное состояние в VTK
     mesh.snapshot(0);
 
-    // std::cout << "Hello World" << std::endl;
+
+    // Делаем шаги по времени,
+    // на каждом шаге считаем новое состояние и пишем его в VTK
+    int frames = 102;
+
+    for(unsigned int step = 1; step < frames; step++) {
+        mesh.doTimeStep(tau);
+        mesh.snapshot(step);
+
+        printf("\rGenerating steps... %d%%", 100 * step / frames);
+
+    }
+
+    std::cout << "\rGenerating steps... 100%\nDone!" << std::endl;
 
     return 0;
 }
